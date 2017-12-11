@@ -1,5 +1,5 @@
 <config>
-    <account username="ironman" password="elmejor"/>
+    <account username="ironman@vengadores.com" password="eljefe"/>
     <uaserver ip="127.0.0.1" port="6001"/>
     <rtpaudio port="6002"/>
     <regproxy ip="127.0.0.1" port="6003"/>
