@@ -31,6 +31,22 @@ class XML(ContentHandler):
                 self.dic[name + "_" + atrib] = attrs.get(atrib, "")
     def dictio(self):
         return(self.dic)
+    def log(self):
+        """
+        Escribe en un fichero json
+        """
+        open('log.xml', 'w'))
+
+    def log1(self):
+        """
+        Comprueba si hay fichero log
+        """
+        try:
+            with open('log.xml', 'r') as file:
+                logg = load(file)
+                self.expiration()
+        except(FileNotFoundError):
+            pass
 
  #def log():
 if __name__ == "__main__":
@@ -52,10 +68,10 @@ if __name__ == "__main__":
 
         print('Enviando:' + LINE)
         if METODO == 'REGISTER':
-            my_socket.send(bytes('REGISTER sip:' + USER + ' SIP/2.0\r\nExpires: ' +
+            my_socket.send(bytes('REGISTER sip:'+USER+' SIP/2.0\r\nExpires: ' +
                                  LINE+'\r\n\r\n', 'utf-8') + b'\r\n')
         if METODO == 'INVITE':
-            my_socket.send(bytes('INVITE sip:' + LINE + ' SIP/2.0\r\n', 'utf-8') +
+            my_socket.send(bytes('INVITE sip:'+LINE+' SIP/2.0\r\n', 'utf-8') +
                            b'\r\n')
         if METODO == 'BYE':
             my_socket.send(bytes('BYE sip:' + LINE + ' SIP/2.0\r\n', 'utf-8') +
