@@ -1,0 +1,8 @@
+<config>
+    <account username="ironman" password=""/>
+    <uaserver ip="127.0.0.1" port="6004"/>
+    <rtpaudio port="6005"/>
+    <regproxy ip="127.0.0.1" port="6006"/>
+    <log path="/home/alumnos/ivega/ptavi"/>
+    <audio path="/home/alumnos/ivega/ptavi"/>
+</config>
