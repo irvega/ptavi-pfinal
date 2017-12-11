@@ -14,6 +14,11 @@ LINE = sys.argv[3]
 CONFIG = sys.argv[1] #ua1.xml
 IP = '127.0.0.1'
 PORT = int('6001')
+def log(logfile, tipo, ip, message):
+    """
+    Escribe en un fichero
+    """
+    df = open('logfile', 'a')
 
 class XML(ContentHandler):
     dic = {}
@@ -31,24 +36,9 @@ class XML(ContentHandler):
                 self.dic[name + "_" + atrib] = attrs.get(atrib, "")
     def dictio(self):
         return(self.dic)
-    def log(self):
-        """
-        Escribe en un fichero json
-        """
-        open('log.xml', 'w'))
 
-    def log1(self):
-        """
-        Comprueba si hay fichero log
-        """
-        try:
-            with open('log.xml', 'r') as file:
-                logg = load(file)
-                self.expiration()
-        except(FileNotFoundError):
-            pass
 
- #def log():
+
 if __name__ == "__main__":
     if len(sys.argv)!=4:
         sys.exit('Usage: python uaclient.py config method option')
@@ -56,7 +46,7 @@ if __name__ == "__main__":
     archivo=XML()
     parser.setContentHandler(archivo)
     parser.parse(open(CONFIG))
-    print(archivo.dictio())
+    confdict = archivo.dictio()
 
     IP = XML.dic['uaserver_ip']
     PORT = int(XML.dic['uaserver_port'])
@@ -68,8 +58,11 @@ if __name__ == "__main__":
 
         print('Enviando:' + LINE)
         if METODO == 'REGISTER':
+            message = ('REGISTER sip:'+USER+' SIP/2.0\r\nExpires: ' +
+                       LINE+'\r\n\r\n', 'utf-8')
             my_socket.send(bytes('REGISTER sip:'+USER+' SIP/2.0\r\nExpires: ' +
                                  LINE+'\r\n\r\n', 'utf-8') + b'\r\n')
+            log(confdict['logfile'], 'sent', IP, message,'\r\n')
         if METODO == 'INVITE':
             my_socket.send(bytes('INVITE sip:'+LINE+' SIP/2.0\r\n', 'utf-8') +
                            b'\r\n')
