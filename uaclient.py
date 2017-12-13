@@ -9,6 +9,8 @@ from xml.sax.handler import ContentHandler
 import socket
 import sys
 
+if len(sys.argv)!=4:
+    sys.exit('Usage: python uaclient.py config method option')
 METODO = sys.argv[2]
 LINE = sys.argv[3]
 CONFIG = sys.argv[1] #ua1.xml
@@ -37,11 +39,8 @@ class XML(ContentHandler):
     def dictio(self):
         return(self.dic)
 
-
-
 if __name__ == "__main__":
-    if len(sys.argv)!=4:
-        sys.exit('Usage: python uaclient.py config method option')
+
     parser = make_parser()
     archivo=XML()
     parser.setContentHandler(archivo)
@@ -58,14 +57,14 @@ if __name__ == "__main__":
 
         print('Enviando:' + LINE)
         if METODO == 'REGISTER':
-            message = ('REGISTER sip:'+USER+' SIP/2.0\r\nExpires: ' +
-                       LINE+'\r\n\r\n', 'utf-8')
-            my_socket.send(bytes('REGISTER sip:'+USER+' SIP/2.0\r\nExpires: ' +
-                                 LINE+'\r\n\r\n', 'utf-8') + b'\r\n')
-            log(confdict['logfile'], 'sent', IP, message,'\r\n')
+            message = 'REGISTER sip:'+USER+' SIP/2.0\r\nExpires: '+LINE+'\r\n\r\n'
+            my_socket.send(bytes(message, 'utf-8') + b'\r\n')
+            #log(confdict['logfile'], 'sent', IP, message,'\r\n')
         if METODO == 'INVITE':
-            my_socket.send(bytes('INVITE sip:'+LINE+' SIP/2.0\r\n', 'utf-8') +
-                           b'\r\n')
+            message = 'INVITE sip:'+USER+' SIP/2.0\r\n', 'utf-8' +                           
+                       b'\r\n'+ 'Content-Type: application/sdp'
+            my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
+        print(message)
         if METODO == 'BYE':
             my_socket.send(bytes('BYE sip:' + LINE + ' SIP/2.0\r\n', 'utf-8') +
                            b'\r\n')
@@ -74,7 +73,8 @@ if __name__ == "__main__":
         print('Recibido -- ', data.decode('utf-8'))
         RECIVE = data.decode('utf-8').split(' ')
         for element in RECIVE:
-            if element == '200' and metodo != 'BYE':
-                my_socket.send(bytes('ACK sip:' + LINE.split(':')[0] +
-                                     ' SIP/2.0\r\n', 'utf-8') + b'\r\n')
+            if element == '401':
+                my_socket.send(bytes(message, 'utf-8') + 'Authorization: Digest              
+                               response="numero aleatorio"' +
+                               ' SIP/2.0\r\n', 'utf-8') + b'\r\n')
     """   
