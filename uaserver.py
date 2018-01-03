@@ -28,12 +28,12 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     
     def handle(self):
         """
-        Envia respuesetas según método
+        Envia respuestas según método
         """
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
-            lista = ['INVITE', 'BYE', 'ACK', 'REGISTER']
+            lista = ['INVITE', 'BYE', 'ACK']
             method = ((line.decode('utf-8')).split(' ')[0])
             if not line:
                 break
@@ -52,11 +52,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 aEjecutar += " < " + CANCION
                 print("Enviamos RTP: ", aEjecutar)
                 os.system(aEjecutar)
-            elif method == lista[3]:
-                self.wfile.write(b'SIP/2.0 200 OK  \r\n\r\n' +
-                                 b'SIP/2.0 401 Unauthorized\r\n' +
-                                 b'WWW Authenticate: Digest nonce="' + b'" \r\n')
-                                 #b'randint(0,99999999999999999)' + b'" \r\n')
             print(' The client send:\r\n' + line.decode('utf-8'))
 if __name__ == "__main__":
     if len(sys.argv) != 2:
