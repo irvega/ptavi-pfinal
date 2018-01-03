@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     XML.parse()
     IP = XML.dic['uaserver_ip']
-    PORT = int(XML.dic['uaserver_port'])
+    PORT = int(XML.dic['uaserver_port'])   
     USER = XML.dic['account_username']
     PORT_AUDIO = XML.dic['rtpaudio_port']
 
