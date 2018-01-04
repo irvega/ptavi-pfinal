@@ -59,6 +59,7 @@ if __name__ == "__main__":
     XML.parse()
     IP = XML.dic['uaserver_ip']
     PORT = int(XML.dic['uaserver_port'])
+    PORT_RTP = int(XML.dic['rtpaudio_port'])
     USER = XML.dic['account_username']
     PORT_AUDIO = XML.dic['rtpaudio_port']
     archivo = XML()
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         elif METODO == 'INVITE':
             message = ('INVITE sip:'+USER+ ' SIP/2.0\r\n' + 'Content-Type: ' +
                        'application/sdp\r\n\r\n' + 'v=0\r\no=' + USER + ' ' +
-                       str(PORT) + '\r\ns=misesion\r\nt=0\r\nm=audio ' +
+                       str(PORT_RTP) + '\r\ns=vengadores\r\nt=0\r\nm=audio ' +
                        PORT_AUDIO + ' RTP\r\n\r\n')
             my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
         elif METODO == 'BYE':
@@ -117,8 +118,10 @@ if __name__ == "__main__":
         try:
             DATA = my_socket.recv(1024)
         except ConnectionRefusedError:
-            sys.exit('20101018160243 Error: No server listening at '+ IP +
+            NOPORT = ('20101018160243 Error: No server listening at '+ IP +
                      ' port ' + str(PORT))
+            logfile.write(NOPORT)
+            sys.exit(NOPORT)
         logsent(logfile)
 
         print('Recibido:', DATA.decode('utf-8'))
