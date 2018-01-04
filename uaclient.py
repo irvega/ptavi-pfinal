@@ -94,7 +94,7 @@ if __name__ == "__main__":
         Escribe en el log lo que recivo
         """
         logfile.write(str(timenow()) + " Recived from " + IP + ':' + str(PORT) +
-                      ': ' + str(''.join(RECIVE[1:-2]) + "\n"))
+                      ': ' + str(' '.join(RECIVE[1:-2]) + "\n"))
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
