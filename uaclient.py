@@ -23,7 +23,8 @@ class XML(ContentHandler):
                       'regproxy': ['ip', 'port'],
                       'log': ['path'],
                       'audio': ['path'],
-                      'server':['name', 'ip', 'port']
+                      'server':['name', 'ip', 'port'],
+                      'account':['username','password']
                       }
 
     def startElement(self, name, attrs):
@@ -67,7 +68,6 @@ if __name__ == "__main__":
 
     METODO = sys.argv[2]
     LINE = sys.argv[3]
-    #SENT = IP + ':' + PORT + ': '
     def timenow():
         """
         Tiempo actual
@@ -122,21 +122,28 @@ if __name__ == "__main__":
                      ' port ' + str(PORT))
             logfile.write(NOPORT)
             sys.exit(NOPORT)
-        logsent(logfile)
-
+        try:
+            logsent(logfile)
+        except NameError:
+            pass
         print('Recibido:', DATA.decode('utf-8'))
         RECIVE = DATA.decode('utf-8').split(' ')
         logrecive(logfile)
 
         for element in RECIVE:
             if element == '401':
-                my_socket.send(bytes(message +
-                               'Authorization: Digest response="' +
-                               str(randint(0, 99999999999999999)) +
-                               '"\r\n', 'utf-8') + b'\r\n')
+                message = (message + 'Authorization: Digest response="' +
+                           str(randint(0, 99999999999999999)) + '"\r\n')
+                my_socket.send(bytes(message, 'utf-8') + b'\r\n')
             if element == '200' and METODO == 'INVITE':
-                my_socket.send(bytes('ACK sip:' + USER +
-                                     ' SIP/2.0\r\n', 'utf-8') + b'\r\n')
+                message = ('ACK sip:' + USER + ' SIP/2.0\r\n'+'Content-Type: ' +
+                           'application/sdp\r\n\r\n' + 'v=0\r\no=' + USER +
+                           ' ' + str(PORT_RTP) + '\r\ns=vengadores\r\nt=0\r\n' +
+                           'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n' + '\r\n')
+                my_socket.send(bytes(message, 'utf-8') + b'\r\n')
             if element == '200' and METODO == 'BYE':
                 logfile.write(str(timenow()) + " Finishing.\n")
                 logfile.close()
+        logsent(logfile)
+        DATA = my_socket.recv(1024)
+        print('Recibido:', DATA.decode('utf-8'))
