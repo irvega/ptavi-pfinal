@@ -7,25 +7,24 @@ import os
 import socketserver
 import sys
 
+
 class EchoHandler(socketserver.DatagramRequestHandler):
     def error(self, line):
         """
         Busca errores en la petición
         """
         line_error = line.split(' ')
-        line_one = line.split('\r\n')
-        print(line_one[0])
+        line_one = ''.join(line.split('\r\n')[0]).split()
         fail = False
-        if line_one[0] and len(line_error) != 4: #ver deberia ser 3
+        if len(line_one) != 3:
             fail = True
-        if line_error[1][0:4] != 'sip:':
-            fail = True
-        if 'SIP/2.0\r\n' not in line_error[2]:
+            print(fail)
+        if line_error[1][0:4] != 'sip:' or 'SIP/2.0\r\n' not in line_error[2]:
             fail = True
         if '@' not in line_error[1]:
             fail = True
         return fail
-    
+
     def handle(self):
         """
         Envia respuestas según método
@@ -57,12 +56,11 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit(' Usage: python3 uaserver.py config')
 
-    CONFIG = sys.argv[1]
     XML.parse()
-
     IP = XML.dic['uaserver_ip']
     PORT = int(XML.dic['uaserver_port'])
     CANCION = XML.dic['audio_path']
+
     SERV = socketserver.UDPServer((IP, PORT), EchoHandler)
     print("Listening...")
     SERV.serve_forever()
