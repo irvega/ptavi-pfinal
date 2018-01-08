@@ -1,8 +1,8 @@
 <config>
-    <account username="ironman" password=""/>
-    <uaserver ip="127.0.0.1" port="6004"/>
-    <rtpaudio port="6005"/>
-    <regproxy ip="127.0.0.1" port="6006"/>
-    <log path="/home/alumnos/ivega/ptavi"/>
-    <audio path="/home/alumnos/ivega/ptavi"/>
+    <account username="capitan@vengadores.com" password="America"/>
+    <uaserver ip="127.0.0.1" port="7002"/>
+    <rtpaudio port="7003"/>
+    <regproxy ip="127.0.0.1" port="8007"/>
+    <log path="/home/irene/ptavi/ptavi-pfinal"/>
+    <audio path="/home/irene/ptavi/ptavi-pfinal"/>
 </config>
