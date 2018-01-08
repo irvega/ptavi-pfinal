@@ -45,7 +45,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                                  b'SIP/2.0 180 Ringing \r\n\r\n' +
                                  b'SIP/2.0 200 OK  \r\n\r\n')
             elif method == lista[1]:
-                self.wfile.write(b'SIP/2.0 200 OK  \r\n')
+                self.wfile.write(b'SIP/2.0 200 OK  \r\n\r\n')
             elif method == lista[2]:
                 aEjecutar = "./mp32rtp -i " + IP + " -p " + str(PORT)
                 aEjecutar += " < " + CANCION
