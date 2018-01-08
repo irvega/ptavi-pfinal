@@ -59,9 +59,12 @@ if __name__ == "__main__":
 
     XML.parse()
     IP = XML.dic['uaserver_ip']
+    IP_PX = XML.dic['regproxy_ip']
+    PORT_PX = int(XML.dic['regproxy_port'])
     PORT = int(XML.dic['uaserver_port'])
     PORT_RTP = int(XML.dic['rtpaudio_port'])
     USER = XML.dic['account_username']
+    USER_SERV = sys.argv[3]
     PORT_AUDIO = XML.dic['rtpaudio_port']
     archivo = XML()
     confdict = archivo.dictio()
@@ -86,28 +89,29 @@ if __name__ == "__main__":
         """
         Escribe en el log lo que envio
         """
-        logfile.write(str(timenow()) + " Sent to " + IP + ':' + str(PORT) + ': ' +
-                      message + "\n")
+        logfile.write(str(timenow()) + " Sent to " + IP + ':' + str(PORT) +
+                          ': ' + message + "\n")
 
     def logrecive(logfile):
         """
         Escribe en el log lo que recivo
         """
         logfile.write(str(timenow()) + " Recived from " + IP + ':' + str(PORT) +
-                      ': ' + str(' '.join(RECIVE[1:-2]) + "\n"))
+                      ': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        my_socket.connect((IP, PORT))
+        my_socket.connect((IP_PX, PORT_PX))
 
         if METODO == 'REGISTER':
-            message = 'REGISTER sip:'+USER+' SIP/2.0\r\nExpires: '+LINE+'\r\n'
+            message = ('REGISTER sip:' + USER + ':' + str(PORT) +
+                       ' SIP/2.0\r\nExpires: ' + LINE + '\r\n')
             my_socket.send(bytes(message + '\r\n', 'utf-8') + b'\r\n')
         elif METODO == 'INVITE':
-            message = ('INVITE sip:'+USER+ ' SIP/2.0\r\n' + 'Content-Type: ' +
-                       'application/sdp\r\n\r\n' + 'v=0\r\no=' + USER + ' ' +
-                       str(PORT_RTP) + '\r\ns=vengadores\r\nt=0\r\nm=audio ' +
-                       PORT_AUDIO + ' RTP\r\n\r\n')
+            message = ('INVITE sip:'+ USER_SERV + ' SIP/2.0\r\n' +
+                       'Content-Type: ' + 'application/sdp\r\n\r\n' +
+                       'v=0\r\no=' + USER + ' ' + str(PORT_RTP) + '\r\ns=ven' +
+                       'gadores\r\nt=0\r\nm=audio '+PORT_AUDIO + ' RTP\r\n\r\n')
             my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
         elif METODO == 'BYE':
             message =  ('BYE sip:' + LINE + ' SIP/2.0\r\n')
@@ -115,13 +119,15 @@ if __name__ == "__main__":
         else:
             my_socket.send(bytes(METODO + ' sip: ' + LINE +
                                  ' SIP/2.0\r\n', 'utf-8') + b'\r\n\r\n')
+
         try:
             DATA = my_socket.recv(1024)
         except ConnectionRefusedError:
             NOPORT = ('20101018160243 Error: No server listening at '+ IP +
-                     ' port ' + str(PORT))
+                     ' port ' + str(PORT_PX))
             logfile.write(NOPORT)
             sys.exit(NOPORT)
+
         try:
             logsent(logfile)
         except NameError:
@@ -135,15 +141,17 @@ if __name__ == "__main__":
                 message = (message + 'Authorization: Digest response="' +
                            str(randint(0, 99999999999999999)) + '"\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
+                logsent(logfile)
             if element == '200' and METODO == 'INVITE':
                 message = ('ACK sip:' + USER + ' SIP/2.0\r\n'+'Content-Type: ' +
                            'application/sdp\r\n\r\n' + 'v=0\r\no=' + USER +
                            ' ' + str(PORT_RTP) + '\r\ns=vengadores\r\nt=0\r\n' +
                            'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n' + '\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
+                logsent(logfile)
             if element == '200' and METODO == 'BYE':
                 logfile.write(str(timenow()) + " Finishing.\n")
+                logsent(logfile)
                 logfile.close()
-        logsent(logfile)
         DATA = my_socket.recv(1024)
         print('Recibido:', DATA.decode('utf-8'))
