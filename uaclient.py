@@ -5,6 +5,7 @@ from random import randint
 from time import gmtime, strftime, time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
+import hashlib
 import socket
 import sys
 
@@ -52,6 +53,30 @@ class XML(ContentHandler):
         parser.parse(open(CONFIG))
         confdict = archivo.dictio()
 
+class log():
+
+    def __init__(self, fichero):
+           #try:
+        self.logfile = open(fichero, "a")
+        self.logfile.write(str(timenow()) + " Starting...\n")  #CORREGIR
+        #except FileNotFoundError:
+        #    logfile = open('logfile', "w")
+
+    def logsent(self, IP, PORT, message):
+        """
+        Escribe en el log lo que envio
+        """
+        self.logfile.write(str(timenow()) + " Sent to " + IP + ':' + str(PORT) +
+                          ': ' + message.replace('\r\n','') + "\n")
+
+    def logrecive(self, IP, PORT, message):
+        """
+        Escribe en el log lo que recivo
+        """
+        self.logfile.write(str(timenow()) + " Recived from " + IP + ':' + str(PORT) +
+                      ': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 4:
@@ -66,38 +91,22 @@ if __name__ == "__main__":
     USER = XML.dic['account_username']
     USER_SERV = sys.argv[3]
     PORT_AUDIO = XML.dic['rtpaudio_port']
+    PSW = XML.dic['account_password']
+    fichero = XML.dic['log_path']
     archivo = XML()
     confdict = archivo.dictio()
 
     METODO = sys.argv[2]
     LINE = sys.argv[3]
+
     def timenow():
         """
         Tiempo actual
         """
         timereal = strftime("%Y%m%d%H%M%S", gmtime(time()))
         return timereal
-    #def log(logfile, tipo, ip, message):
 
-        #try:
-    logfile = open('logfile.txt', "a")
-    logfile.write(str(timenow()) + " Starting...\n")
-        #except FileNotFoundError:
-        #    logfile = open('logfile', "w")
-
-    def logsent(logfile):
-        """
-        Escribe en el log lo que envio
-        """
-        logfile.write(str(timenow()) + " Sent to " + IP + ':' + str(PORT) +
-                          ': ' + message + "\n")
-
-    def logrecive(logfile):
-        """
-        Escribe en el log lo que recivo
-        """
-        logfile.write(str(timenow()) + " Recived from " + IP + ':' + str(PORT) +
-                      ': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
+    log = log(fichero)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -128,30 +137,47 @@ if __name__ == "__main__":
             logfile.write(NOPORT)
             sys.exit(NOPORT)
 
-        try:
-            logsent(logfile)
+        try:           
+            log.logsent(IP, PORT, message)
         except NameError:
             pass
         print('Recibido:', DATA.decode('utf-8'))
         RECIVE = DATA.decode('utf-8').split(' ')
-        logrecive(logfile)
+        log.logrecive(IP, PORT, message)
+
+        def check(nonce):
+            """
+            Pasa por hash para sacar numero
+            """
+            fcheck = hashlib.md5()
+            fcheck.update(bytes(nonce, "utf-8"))
+            fcheck.update(bytes(PSW, "utf-8"))
+            fcheck.digest() 
+            return fcheck.hexdigest()
 
         for element in RECIVE:
             if element == '401':
+                nonce = RECIVE[5][7:-1]
+                new_nonce = check(nonce)
                 message = (message + 'Authorization: Digest response="' +
-                           str(randint(0, 99999999999999999)) + '"\r\n')
+                           new_nonce + '"\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
-                logsent(logfile)
+                log.logsent(IP, PORT, message)
+                DATA = my_socket.recv(1024)
+                print('Recibido:', DATA.decode('utf-8'))
             if element == '200' and METODO == 'INVITE':
                 message = ('ACK sip:' + USER + ' SIP/2.0\r\n'+'Content-Type: ' +
                            'application/sdp\r\n\r\n' + 'v=0\r\no=' + USER +
                            ' ' + str(PORT_RTP) + '\r\ns=vengadores\r\nt=0\r\n' +
                            'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n' + '\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
-                logsent(logfile)
+                log.logsent(IP, PORT, message)
+                DATA = my_socket.recv(1024)
+                print('Recibido:', DATA.decode('utf-8'))
             if element == '200' and METODO == 'BYE':
+                logfile = log()
                 logfile.write(str(timenow()) + " Finishing.\n")
-                logsent(logfile)
-                logfile.close()
-        DATA = my_socket.recv(1024)
-        print('Recibido:', DATA.decode('utf-8'))
+                log.logsent(IP, PORT, message)
+                log.logfile.close()
+
+
