@@ -56,29 +56,44 @@ class XML(ContentHandler):
         confdict = archivo.dictio()
 
 class log():
-
+    """
+    Crea un archivo donde ser recogen todos los moviemientos
+    """
     def __init__(self, fichero):
+        """
+        Abre el fichero
+        """
            #try:
         self.logfile = open(fichero, "a")
-        if self.logfile == None: #COREEGIIIR
+        if self.logfile == '': #COREEGIIIR
             self.logfile.write(str(timenow()) + " Starting...\n")  #CORREGIR
         #except FileNotFoundError:
         #    logfile = open('logfile', "w")
+
+    def timenow(self):
+        """
+        Tiempo actual
+        """
+        timereal = strftime("%Y%m%d%H%M%S", gmtime(time()))
+        return timereal
 
     def logsent(self, IP, PORT, message):
         """
         Escribe en el log lo que envio
         """
-        self.logfile.write(str(timenow()) + " Sent to " + IP + ':' + str(PORT) +
-                          ': ' + message.replace('\r\n','') + "\n")
+        self.logfile.write(str(self.timenow()) + " Sent to " + IP + ':' +
+                           str(PORT) + ': ' + message.replace('\r\n','') + "\n")
 
     def logrecive(self, IP, PORT, message):
         """
         Escribe en el log lo que recivo
         """
-        self.logfile.write(str(timenow()) + " Recived from " + IP + ':' +
+        self.logfile.write(str(self.timenow()) + " Recived from " + IP + ':' +
                            str(PORT) +': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
     def cierre(self):
+        """
+        Cierra el fichero
+        """
         self.logfile.write(str(timenow()) + " Finishing.\n")
         self.logfile.close()
 
@@ -104,14 +119,19 @@ if __name__ == "__main__":
     METODO = sys.argv[2]
     LINE = sys.argv[3]
 
-    def timenow():
-        """
-        Tiempo actual
-        """
-        timereal = strftime("%Y%m%d%H%M%S", gmtime(time()))
-        return timereal
+
 
     log = log(fichero)
+
+    def check(nonce):
+        """
+        Pasa por hash para sacar numero
+        """
+        fcheck = hashlib.md5()
+        fcheck.update(bytes(nonce, "utf-8"))
+        fcheck.update(bytes(PSW, "utf-8"))
+        fcheck.digest() 
+        return fcheck.hexdigest()
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -125,7 +145,8 @@ if __name__ == "__main__":
             message = ('INVITE sip:'+ USER_SERV + ' SIP/2.0\r\n' +
                        'Content-Type: ' + 'application/sdp\r\n\r\n' +
                        'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
-                       'gadores\r\nt=0\r\nm=audio '+str(PORT_RTP) + ' RTP\r\n\r\n')
+                       'gadores\r\nt=0\r\nm=audio '+ str(PORT_RTP) + 
+                       ' RTP\r\n\r\n')
             my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
         elif METODO == 'BYE':
             message =  ('BYE sip:' + LINE + ' SIP/2.0\r\n')
@@ -149,16 +170,6 @@ if __name__ == "__main__":
         print('Recibido:', DATA.decode('utf-8'))
         RECIVE = DATA.decode('utf-8').split(' ')
         log.logrecive(IP, PORT, message)
-
-        def check(nonce):
-            """
-            Pasa por hash para sacar numero
-            """
-            fcheck = hashlib.md5()
-            fcheck.update(bytes(nonce, "utf-8"))
-            fcheck.update(bytes(PSW, "utf-8"))
-            fcheck.digest() 
-            return fcheck.hexdigest()
 
         for element in RECIVE:
             if element == '401':
