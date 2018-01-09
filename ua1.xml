@@ -3,6 +3,6 @@
     <uaserver ip="127.0.0.1" port="6002"/>
     <rtpaudio port="6003"/>
     <regproxy ip="127.0.0.1" port="8007"/>
-    <log path="/home/irene/ptavi/ptavi-pfinal"/>
-    <audio path="/home/irene/ptavi/ptavi-pfinal"/>
+    <log path="log1.txt"/>
+    <audio path="cancion.mp3"/>
 </config>
