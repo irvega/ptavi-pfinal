@@ -1,5 +1,5 @@
 <config>
     <server name="proxy" ip="127.0.0.1" port="8007"/>
-    <database path="/home/irene/ptavi/ptavi-pfinal" passwdpath="TonyStark"/>
-    <log path="/home/irene/ptavi/ptavi-pfinal"/>
+    <database path="basedatos.txt" passwdpath="TonyStark"/>
+    <log path="log_pr.txt"/>
 </config>
