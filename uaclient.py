@@ -25,7 +25,9 @@ class XML(ContentHandler):
                       'log': ['path'],
                       'audio': ['path'],
                       'server':['name', 'ip', 'port'],
-                      'account':['username','password']
+                      'account':['username','password'],
+                      'database':['path','passwdpath'],
+                      'log':['path'],
                       }
 
     def startElement(self, name, attrs):
@@ -58,7 +60,8 @@ class log():
     def __init__(self, fichero):
            #try:
         self.logfile = open(fichero, "a")
-        self.logfile.write(str(timenow()) + " Starting...\n")  #CORREGIR
+        if self.logfile == None: #COREEGIIIR
+            self.logfile.write(str(timenow()) + " Starting...\n")  #CORREGIR
         #except FileNotFoundError:
         #    logfile = open('logfile', "w")
 
@@ -73,9 +76,11 @@ class log():
         """
         Escribe en el log lo que recivo
         """
-        self.logfile.write(str(timenow()) + " Recived from " + IP + ':' + str(PORT) +
-                      ': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
-
+        self.logfile.write(str(timenow()) + " Recived from " + IP + ':' +
+                           str(PORT) +': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
+    def cierre(self):
+        self.logfile.write(str(timenow()) + " Finishing.\n")
+        self.logfile.close()
 
 if __name__ == "__main__":
 
@@ -119,8 +124,8 @@ if __name__ == "__main__":
         elif METODO == 'INVITE':
             message = ('INVITE sip:'+ USER_SERV + ' SIP/2.0\r\n' +
                        'Content-Type: ' + 'application/sdp\r\n\r\n' +
-                       'v=0\r\no=' + USER + ' ' + str(PORT_RTP) + '\r\ns=ven' +
-                       'gadores\r\nt=0\r\nm=audio '+PORT_AUDIO + ' RTP\r\n\r\n')
+                       'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
+                       'gadores\r\nt=0\r\nm=audio '+str(PORT_RTP) + ' RTP\r\n\r\n')
             my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
         elif METODO == 'BYE':
             message =  ('BYE sip:' + LINE + ' SIP/2.0\r\n')
@@ -166,18 +171,19 @@ if __name__ == "__main__":
                 DATA = my_socket.recv(1024)
                 print('Recibido:', DATA.decode('utf-8'))
             if element == '200' and METODO == 'INVITE':
-                message = ('ACK sip:' + USER + ' SIP/2.0\r\n'+'Content-Type: ' +
-                           'application/sdp\r\n\r\n' + 'v=0\r\no=' + USER +
-                           ' ' + str(PORT_RTP) + '\r\ns=vengadores\r\nt=0\r\n' +
-                           'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n' + '\r\n')
+                IP_SV = RECIVE[12].split('\r\n')[0]
+                PORT_SV = RECIVE[13]
+                #print(RECIVE)
+                message = ('ACK sip:' + USER + ' SIP/2.0\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
                 log.logsent(IP, PORT, message)
                 DATA = my_socket.recv(1024)
                 print('Recibido:', DATA.decode('utf-8'))
+                """
+                aEjecutar = "./mp32rtp -i " + IP_SV + " -p " + str(PORT_SV)
+                aEjecutar += " < " + CANCION
+                print("Enviamos RTP: ", aEjecutar)
+                os.system(aEjecutar)
+                """
             if element == '200' and METODO == 'BYE':
-                logfile = log()
-                logfile.write(str(timenow()) + " Finishing.\n")
-                log.logsent(IP, PORT, message)
-                log.logfile.close()
-
-
+                log.cierre()
