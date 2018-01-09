@@ -41,17 +41,26 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             elif self.error(line.decode('utf-8')):
                 self.wfile.write(b'SIP/2.0 400 Bad Request')
             elif method == lista[0]:
-                self.wfile.write(b'SIP/2.0 100 Trying \r\n\r\n' +
-                                 b'SIP/2.0 180 Ringing \r\n\r\n' +
-                                 b'SIP/2.0 200 OK  \r\n\r\n')
+                message = ('SIP/2.0 100 Trying \r\n\r\n' + 
+                           'SIP/2.0 180 Ringing \r\n\r\n' +
+                           'SIP/2.0 200 OK  \r\n\r\n' + 
+                           'Content-Type: application/sdp\r\n\r\n' +
+                           'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
+                           'gadores\r\nt=0\r\nm=audio '+
+                            str(PORT_RTP) + ' RTP\r\n\r\n')
+                self.wfile.write(bytes(message, 'utf-8')) 
+                #FALTA SDP 
+                PORT_CL = (line.decode('utf-8').split(' ')[5])
+                IP_CL = (line.decode('utf-8').split(' ')[4].split('\r\n')[0])
             elif method == lista[1]:
                 self.wfile.write(b'SIP/2.0 200 OK  \r\n\r\n')
             elif method == lista[2]:
-                aEjecutar = "./mp32rtp -i " + IP + " -p " + str(PORT)
+                aEjecutar = "./mp32rtp -i " + IP_CL + " -p " + str(PORT_CL)
                 aEjecutar += " < " + CANCION
                 print("Enviamos RTP: ", aEjecutar)
                 os.system(aEjecutar)
             print(' The client send:\r\n' + line.decode('utf-8'))
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit(' Usage: python3 uaserver.py config')
@@ -60,7 +69,8 @@ if __name__ == "__main__":
     IP = XML.dic['uaserver_ip']
     PORT = int(XML.dic['uaserver_port'])
     CANCION = XML.dic['audio_path']
-
+    USER = XML.dic['account_username']
+    PORT_RTP = int(XML.dic['rtpaudio_port'])
     SERV = socketserver.UDPServer((IP, PORT), EchoHandler)
     print("Listening...")
     SERV.serve_forever()
