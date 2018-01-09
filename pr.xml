@@ -1,5 +1,5 @@
 <config>
     <server name="proxy" ip="127.0.0.1" port="8007"/>
-    <database path="basedatos.txt" passwdpath="TonyStark"/>
+    <database path="basedatos.txt" passwdpath="passwords.txt"/>
     <log path="log_pr.txt"/>
 </config>
