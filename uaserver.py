@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 from random import randint
-from uaclient import XML
+from uaclient import XML, log
 from xml.sax import make_parser
 import os
 import socketserver
@@ -30,16 +30,19 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         Envia respuestas según método
         """
         while 1:
-            # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             lista = ['INVITE', 'BYE', 'ACK']
             method = ((line.decode('utf-8')).split(' ')[0])
             if not line:
                 break
             if method not in lista:
-                self.wfile.write(b'SIP/2.0 405 Method Not Allowed \r\n\r\n')
+                message = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
+                self.wfile.write(bytes(message, 'utf-8'))
+                log.logsent(IP, PORT, message)
             elif self.error(line.decode('utf-8')):
-                self.wfile.write(b'SIP/2.0 400 Bad Request')
+                message = 'SIP/2.0 400 Bad Request\r\n\r\n'
+                self.wfile.write(bytes(message, 'utf-8'))
+                log.logsent(IP, PORT, message)
             elif method == lista[0]:
                 message = ('SIP/2.0 100 Trying \r\n\r\n' + 
                            'SIP/2.0 180 Ringing \r\n\r\n' +
@@ -48,12 +51,16 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                            'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
                            'gadores\r\nt=0\r\nm=audio '+
                             str(PORT_RTP) + ' RTP\r\n\r\n')
-                self.wfile.write(bytes(message, 'utf-8')) 
+                self.wfile.write(bytes(message, 'utf-8'))
+                log.logsent(IP, PORT, message) 
                 #FALTA SDP 
                 PORT_CL = (line.decode('utf-8').split(' ')[5])
                 IP_CL = (line.decode('utf-8').split(' ')[4].split('\r\n')[0])
             elif method == lista[1]:
-                self.wfile.write(b'SIP/2.0 200 OK  \r\n\r\n')
+                message = 'SIP/2.0 200 OK  \r\n\r\n'
+                self.wfile.write(bytes(message, 'utf-8'))
+                log.logsent(IP, PORT, message) 
+                log.cierre()
             elif method == lista[2]:
                 aEjecutar = "./mp32rtp -i " + IP_CL + " -p " + str(PORT_CL)
                 aEjecutar += " < " + CANCION
@@ -71,6 +78,16 @@ if __name__ == "__main__":
     CANCION = XML.dic['audio_path']
     USER = XML.dic['account_username']
     PORT_RTP = int(XML.dic['rtpaudio_port'])
+    fichero = XML.dic['log_path']
+
+    def timenow():
+        """
+        Tiempo actual
+        """
+        timereal = strftime("%Y%m%d%H%M%S", gmtime(time()))
+        return timereal
+
+    log = log(fichero)
     SERV = socketserver.UDPServer((IP, PORT), EchoHandler)
     print("Listening...")
     SERV.serve_forever()
