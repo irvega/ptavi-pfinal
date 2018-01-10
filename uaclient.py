@@ -6,6 +6,7 @@ from time import gmtime, strftime, time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 import hashlib
+import os
 import socket
 import sys
 
@@ -24,10 +25,10 @@ class XML(ContentHandler):
                       'regproxy': ['ip', 'port'],
                       'log': ['path'],
                       'audio': ['path'],
-                      'server':['name', 'ip', 'port'],
-                      'account':['username','password'],
-                      'database':['path','passwdpath'],
-                      'log':['path'],
+                      'server': ['name', 'ip', 'port'],
+                      'account': ['username', 'password'],
+                      'database': ['path', 'passwdpath'],
+                      'log': ['path'],
                       }
 
     def startElement(self, name, attrs):
@@ -48,12 +49,13 @@ class XML(ContentHandler):
         """
         Lee el fichero
         """
-        CONFIG = sys.argv[1] #ua1.xml
+        CONFIG = sys.argv[1]
         parser = make_parser()
         archivo = XML()
         parser.setContentHandler(archivo)
         parser.parse(open(CONFIG))
         confdict = archivo.dictio()
+
 
 class log():
     """
@@ -63,12 +65,9 @@ class log():
         """
         Abre el fichero
         """
-           #try:
         self.logfile = open(fichero, "a")
-        if self.logfile == '': #COREEGIIIR
-            self.logfile.write(str(timenow()) + " Starting...\n")  #CORREGIR
-        #except FileNotFoundError:
-        #    logfile = open('logfile', "w")
+        if os.stat(fichero).st_size == 0:
+            self.logfile.write(str(self.timenow()) + " Starting...\n")
 
     def timenow(self):
         """
@@ -82,19 +81,34 @@ class log():
         Escribe en el log lo que envio
         """
         self.logfile.write(str(self.timenow()) + " Sent to " + IP + ':' +
-                           str(PORT) + ': ' + message.replace('\r\n','') + "\n")
+                           str(PORT) + ': ' + message.replace('\r\n', '')
+                           + "\n")
 
-    def logrecive(self, IP, PORT, message):
+    def logrecive(self, IP, PORT,  RECIVE):
         """
         Escribe en el log lo que recivo
         """
-        self.logfile.write(str(self.timenow()) + " Recived from " + IP + ':' +
-                           str(PORT) +': ' + str(' '.join(RECIVE[1:-1]) + "\n"))
+        #IP MAL y puerto
+        if ''.join(RECIVE[0]) != 'SIP/2.0':
+            print('NO MAMEEEES_rec')
+            self.logfile.write(str(self.timenow()) + " Recived from " + IP + ':' +
+                   str(PORT) + ': ' + str(' '.join(RECIVE[:-1]) + "\n"))
+        else:
+            self.logfile.write(str(self.timenow()) + " Recived from " + IP + ':' +
+                                   str(PORT) + ': ' + str(' '.join(RECIVE[1:]) + 
+                                   "\n"))
+
+    def no_port(self):
+        """
+        No hay puerto escuchando
+        """
+        self.logfile.write(str(self.timenow()) + NOPORT + '\r\n')
+
     def cierre(self):
         """
         Cierra el fichero
         """
-        self.logfile.write(str(timenow()) + " Finishing.\n")
+        self.logfile.write(str(self.timenow()) + " Finishing.\n")
         self.logfile.close()
 
 if __name__ == "__main__":
@@ -113,15 +127,15 @@ if __name__ == "__main__":
     PORT_AUDIO = XML.dic['rtpaudio_port']
     PSW = XML.dic['account_password']
     fichero = XML.dic['log_path']
+    SONG = XML.dic['audio_path']
     archivo = XML()
     confdict = archivo.dictio()
 
     METODO = sys.argv[2]
     LINE = sys.argv[3]
 
-
-
     log = log(fichero)
+
 
     def check(nonce):
         """
@@ -130,7 +144,7 @@ if __name__ == "__main__":
         fcheck = hashlib.md5()
         fcheck.update(bytes(nonce, "utf-8"))
         fcheck.update(bytes(PSW, "utf-8"))
-        fcheck.digest() 
+        fcheck.digest()
         return fcheck.hexdigest()
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
@@ -145,7 +159,7 @@ if __name__ == "__main__":
             message = ('INVITE sip:'+ USER_SERV + ' SIP/2.0\r\n' +
                        'Content-Type: ' + 'application/sdp\r\n\r\n' +
                        'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
-                       'gadores\r\nt=0\r\nm=audio '+ str(PORT_RTP) + 
+                       'gadores\r\nt=0\r\nm=audio '+ str(PORT_RTP) +
                        ' RTP\r\n\r\n')
             my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
         elif METODO == 'BYE':
@@ -158,18 +172,21 @@ if __name__ == "__main__":
         try:
             DATA = my_socket.recv(1024)
         except ConnectionRefusedError:
-            NOPORT = ('20101018160243 Error: No server listening at '+ IP +
-                     ' port ' + str(PORT_PX))
-            logfile.write(NOPORT)
+            NOPORT = (' Error: No server listening at '+ IP +
+                      ' port ' + str(PORT_PX))
+            log.no_port()
             sys.exit(NOPORT)
 
-        try:           
+        try:         
             log.logsent(IP, PORT, message)
         except NameError:
             pass
         print('Recibido:', DATA.decode('utf-8'))
         RECIVE = DATA.decode('utf-8').split(' ')
-        log.logrecive(IP, PORT, message)
+        try:
+            log.logrecive(IP, PORT, RECIVE)
+        except NameError:
+            pass
 
         for element in RECIVE:
             if element == '401':
@@ -184,17 +201,16 @@ if __name__ == "__main__":
             if element == '200' and METODO == 'INVITE':
                 IP_SV = RECIVE[12].split('\r\n')[0]
                 PORT_SV = RECIVE[13]
-                #print(RECIVE)
                 message = ('ACK sip:' + USER + ' SIP/2.0\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
                 log.logsent(IP, PORT, message)
                 DATA = my_socket.recv(1024)
                 print('Recibido:', DATA.decode('utf-8'))
-                """
+
                 aEjecutar = "./mp32rtp -i " + IP_SV + " -p " + str(PORT_SV)
-                aEjecutar += " < " + CANCION
+                aEjecutar += " < " + SONG
                 print("Enviamos RTP: ", aEjecutar)
                 os.system(aEjecutar)
-                """
+
             if element == '200' and METODO == 'BYE':
                 log.cierre()
