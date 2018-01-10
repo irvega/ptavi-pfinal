@@ -1,6 +1,6 @@
 <config>
     <account username="capitan@vengadores.com" password="America"/>
-    <uaserver ip="127.0.0.1" port="7002"/>
+    <uaserver ip="127.0.0.1" port="7001"/>
     <rtpaudio port="7003"/>
     <regproxy ip="127.0.0.1" port="8007"/>
     <log path="log2.txt"/>
