@@ -46,43 +46,40 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             if method not in lista:
                 message = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                 self.wfile.write(bytes(message, 'utf-8'))
-                #log.logsent(IP, PORT, message)
             elif self.error(line.decode('utf-8')):
                 message = 'SIP/2.0 400 Bad Request\r\n\r\n'
                 self.wfile.write(bytes(message, 'utf-8'))
-                #log.logsent(IP, PORT, message)
             elif method == lista[0]:
                 message = ('SIP/2.0 100 Trying \r\n\r\n' +
                            'SIP/2.0 180 Ringing \r\n\r\n' +
-                           'SIP/2.0 200 OK  \r\n\r\n' +
+                           'SIP/2.0 200 OK \r\n\r\n' +
                            'Content-Type: application/sdp\r\n\r\n' +
                            'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
                            'gadores\r\nt=0\r\nm=audio ' + str(PORT_RTP) +
                            ' RTP\r\n\r\n')
                 self.wfile.write(bytes(message, 'utf-8'))
-                #log.logsent(IP, PORT, message)
                 USER_CL = (line.decode('utf-8').split(' ')[3].split('=')[2])
-                print(USER_CL)
                 PORT_CL = (line.decode('utf-8').split(' ')[5])
                 IP_CL = (line.decode('utf-8').split(' ')[4].split('\r\n')[0])
-                self.dic[IP_CL] = [PORT_CL]
+                self.dic[IP_CL] = PORT_CL
             elif method == lista[1]:
                 message = 'SIP/2.0 200 OK  \r\n\r\n'
                 self.wfile.write(bytes(message, 'utf-8'))
                 log.logsent(IP, PORT, message, fichero)
-                log.cierre()
+                log.cierre(fichero)
             elif method == lista[2]:
                 IP_CL = self.client_address[0]
-                print(self.dic[IP_CL])
-                if IP_CL in self.dic: #COMPROBAAR
-                    print('ENTRAA')
+                if IP_CL in self.dic:
                     aEjecutar = ("./mp32rtp -i " + IP_CL + " -p " +
                                  str(self.dic[IP_CL]))
                     aEjecutar += " < " + CANCION
                     print("Enviamos RTP: ", aEjecutar)
                     os.system(aEjecutar)
-                del self.dic[IP_CL]
-            print(' The client send:\r\n' + line.decode('utf-8'))         
+                try:
+                    del self.dic[IP_CL]
+                except KeyError:
+                    pass
+            print(' The client send:\r\n' + line.decode('utf-8'))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
