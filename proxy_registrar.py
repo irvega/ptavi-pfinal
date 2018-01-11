@@ -38,7 +38,6 @@ class USERS(socketserver.DatagramRequestHandler):
         """
         try:
             with open(base, 'r') as file:
-                #file.readline(str(self.dic))
                 self.expiration()
         except(FileNotFoundError):
             pass
@@ -48,9 +47,9 @@ class USERS(socketserver.DatagramRequestHandler):
         Borra elementos expirados
         """
         expired = []
-        time_exp = strftime('%Y-%m-%d %H:%M:%S', gmtime(time()))
+        time_exp = time()
         for USER in self.dic:
-            if str(self.dic[USER][2]) <= time_exp:
+            if self.dic[USER][2] <= time_exp:
                 expired.append(USER)
         for USER in expired:
             del self.dic[USER]
@@ -94,7 +93,7 @@ class USERS(socketserver.DatagramRequestHandler):
                 my_socket.close()
             except ConnectionRefusedError:
                 NOPORT = ('20101018160243 Error: No server listening at ' +
-                           IP_SERV + 'port ' + str(PORT_SERV))
+                          IP_SERV + 'port ' + str(PORT_SERV))
                 recive = 'SIP/2.0 504 Server Time-out\r\n\r\n'
             return recive
 
@@ -117,7 +116,7 @@ class USERS(socketserver.DatagramRequestHandler):
             PORT = WORD[1].split(':')[2]
             EXPIRE_NUM = WORD[4]
             EXPIRES = int(EXPIRE_NUM)+time()
-            EXPIRE = strftime('%Y-%m-%d %H:%M:%S', gmtime(EXPIRES))
+            EXPIRE = strftime('%Y%m%d%H%M%S', gmtime(EXPIRES))
             log.logrecive(IP, PORT,  RECIVE, fichero)
             if WORD[4] != '0':
                 if USER in self.dic:
@@ -142,44 +141,38 @@ class USERS(socketserver.DatagramRequestHandler):
                         nonce = randint(0, 99999999999999999)
                         self.dic_nonc[USER] = str(nonce)
                         message = ('SIP/2.0 401 Unauthorized\r\n' +
-                                  'WWW-Authenticate: Digest nonce="' +
+                                   'WWW-Authenticate: Digest nonce="' +
                                    str(nonce))
-                        self.wfile.write(bytes(message, 'utf-8') + b'" \r\n')
+                        self.wfile.write(bytes(message, 'utf-8') + b'" \r\n\r\n')
             else:
                 self.dic[USER] = [IP, PORT, EXPIRES, EXPIRE_NUM]
                 try:
                     del self.dic[USER]
                     self.user_create(base)
-                    message = (' USER DELETE')
+                    message = 'SIP/2.0 200 OK  \r\n\r\n'
+                    self.wfile.write(bytes(message, 'utf-8'))
                 except(KeyError):
                     message = (' NOTICE: This user dont exist!')
             log.logsent(IP, PORT, message, fichero)
         elif line and METHOD == 'INVITE' or METHOD == 'BYE' or METHOD == 'ACK':
             USER = WORD[1][4:]
+            print(line.decode('utf-8'))
+            print(USER)
             if USER in self.dic:
-                #PORT_SERV = int('7002')
-                IP = self.dic[USER][0] #SERV
-                PORT = int(self.dic[USER][1]) #SERV
+                IP = self.client_address[0]
+                PORT = self.client_address[1]
+                log.logrecive(IP, PORT,  RECIVE, fichero)
+                IP = self.dic[USER][0]
+                PORT = int(self.dic[USER][1])
+                print(PORT)
                 message = self.sent_uaserver(IP, PORT, METHOD, line)
                 self.wfile.write(bytes(message, 'utf-8') + b'\r\n\r\n')
+                log.logsent(IP, PORT, message, fichero)
             else:
                 message = 'SIP/2.0 404 User Not Found\r\n\r\n'
                 self.wfile.write(bytes(message, 'utf-8'))
-            if METHOD == 'ACK':
-                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
-                    print('AAACKKKK')
-                    print(IP)
-                    print('puerto: ', PORT)
-                    PORT1 = 7001
-                    my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    my_socket.connect((IP, PORT1))
-                    my_socket.send(bytes(line.decode('utf-8'), 'utf-8') + b'\r\n')
-            if RECIVE != None:
-                IP = self.client_address[0] #PORT COREEGIIIIR
-                log.logrecive(IP, PORT,  RECIVE, fichero)
-            log.logsent(IP, PORT, message, fichero)
         else:
-            IP = self.client_address[0] #PONER
+            IP = self.client_address[0]
             PORT = self.client_address[1]
             message = 'SIP/2.0 405 Method Not Allowed \r\n\r\n'
             self.wfile.write(bytes(message, 'utf-8'))
