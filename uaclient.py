@@ -82,24 +82,26 @@ class log():
         Escribe en el log lo que envio
         """
         self.logfile = open(fichero, "a")
-        self.logfile.write(str(self.timenow(fichero)) + " Sent to " + IP + ':' +
-                           str(PORT) + ': ' + message.replace('\r\n', '')
-                           + "\n")
+        self.logfile.write(str(self.timenow(fichero)) + " Sent to " + IP +
+                           ':' + str(PORT) + ': ' +
+                           message.replace('\r\n', '') + "\n")
         self.logfile.close()
 
     def logrecive(self, IP, PORT,  RECIVE, fichero):
         """
         Escribe en el log lo que recivo
         """
-        #IP MAL y puerto
         self.logfile = open(fichero, "a")
         if ''.join(RECIVE[0]) != 'SIP/2.0':
-            self.logfile.write(str(self.timenow(fichero)) + " Recived from " + IP + ':' +
-                   str(PORT) + ': ' + str(' '.join(RECIVE).replace('\r\n', '') + "\n"))
+            self.logfile.write(str(self.timenow(fichero)) + " Recived from " +
+                               IP + ':' + str(PORT) + ': ' +
+                               str(' '.join(RECIVE).replace('\r\n', '') +
+                               "\n"))
         else:
-            self.logfile.write(str(self.timenow(fichero)) + " Recived from " + IP + ':' +
-                                   str(PORT) + ': ' + 
-                                   str(' '.join(RECIVE[1:]).replace('\r\n', '') + "\n"))
+            self.logfile.write(str(self.timenow(fichero)) + " Recived from " +
+                               IP + ':' + str(PORT) + ': ' +
+                               str(' '.join(RECIVE[1:]).replace('\r\n', '') +
+                               "\n"))
         self.logfile.close()
 
     def no_port(self, fichero):
@@ -109,7 +111,6 @@ class log():
         self.logfile = open(fichero, "a")
         self.logfile.write(str(self.timenow(fichero)) + NOPORT + '\r\n')
         self.logfile.close()
-
 
     def cierre(self, fichero):
         """
@@ -144,7 +145,6 @@ if __name__ == "__main__":
 
     log = log(fichero)
 
-
     def check(nonce):
         """
         Pasa por hash para sacar numero
@@ -164,14 +164,14 @@ if __name__ == "__main__":
                        ' SIP/2.0\r\nExpires: ' + LINE + '\r\n')
             my_socket.send(bytes(message + '\r\n', 'utf-8') + b'\r\n')
         elif METODO == 'INVITE':
-            message = ('INVITE sip:'+ USER_SERV + ' SIP/2.0\r\n' +
+            message = ('INVITE sip:' + USER_SERV + ' SIP/2.0\r\n' +
                        'Content-Type: ' + 'application/sdp\r\n\r\n' +
                        'v=0\r\no=' + USER + ' ' + IP + '\r\ns=ven' +
-                       'gadores\r\nt=0\r\nm=audio '+ str(PORT_RTP) +
+                       'gadores\r\nt=0\r\nm=audio ' + str(PORT_RTP) +
                        ' RTP\r\n\r\n')
             my_socket.send(bytes(message, 'utf-8')+b'\r\n\r\n')
         elif METODO == 'BYE':
-            message =  ('BYE sip:' + LINE + ' SIP/2.0\r\n')
+            message = ('BYE sip:' + LINE + ' SIP/2.0\r\n')
             my_socket.send(bytes(message, 'utf-8') + b'\r\n')
         else:
             my_socket.send(bytes(METODO + ' sip: ' + LINE +
@@ -180,13 +180,13 @@ if __name__ == "__main__":
         try:
             DATA = my_socket.recv(1024)
         except ConnectionRefusedError:
-            NOPORT = (' Error: No server listening at '+ IP_PX +
+            NOPORT = (' Error: No server listening at ' + IP_PX +
                       ' port ' + str(PORT_PX))
             log.no_port(fichero)
             sys.exit(NOPORT)
 
-        try:    
-            PORT = PORT_PX     
+        try:
+            PORT = PORT_PX
             log.logsent(IP, PORT, message, fichero)
         except NameError:
             pass
@@ -210,18 +210,18 @@ if __name__ == "__main__":
                 DATA = my_socket.recv(1024)
                 print('Recibido:', DATA.decode('utf-8'))
             if element == '200' and METODO == 'INVITE':
-                IP_SV = RECIVE[12].split('\r\n')[0]
-                PORT_SV = RECIVE[13]
-                message = ('ACK sip:' + USER + ' SIP/2.0\r\n')
+                IP_SV = RECIVE[11].split('\r\n')[0]
+                PORT_SV = RECIVE[12]
+                message = ('ACK sip:' + USER_SERV + ' SIP/2.0\r\n')
                 my_socket.send(bytes(message, 'utf-8') + b'\r\n')
                 log.logsent(IP, PORT, message, fichero)
                 DATA = my_socket.recv(1024)
                 print('Recibido:', DATA.decode('utf-8'))
-
-                aEjecutar = "./mp32rtp -i " + IP_SV + " -p " + str(PORT_SV)
-                aEjecutar += " < " + SONG
+                
+                aEjecutar = ("./mp32rtp -i " + IP_SV + " -p " + str(PORT_SV) +
+                             " < " + SONG)
                 print("Enviamos RTP: ", aEjecutar)
                 os.system(aEjecutar)
-
+                print('ACABADO')
             if element == '200' and METODO == 'BYE':
                 log.cierre(fichero)
