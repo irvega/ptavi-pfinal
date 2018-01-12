@@ -217,7 +217,7 @@ if __name__ == "__main__":
                 log.logsent(IP, PORT, message, fichero)
                 DATA = my_socket.recv(1024)
                 print('Recibido:', DATA.decode('utf-8'))
-                
+
                 aEjecutar = ("./mp32rtp -i " + IP_SV + " -p " + str(PORT_SV) +
                              " < " + SONG)
                 print("Enviamos RTP: ", aEjecutar)
