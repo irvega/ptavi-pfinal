@@ -92,7 +92,7 @@ class log():
         Escribe en el log lo que recivo
         """
         self.logfile = open(fichero, "a")
-        if ''.join(RECIVE[0]) != 'SIP/2.0':
+        if RECIVE and ''.join(RECIVE[0]) != 'SIP/2.0':
             self.logfile.write(str(self.timenow(fichero)) + " Recived from " +
                                IP + ':' + str(PORT) + ': ' +
                                str(' '.join(RECIVE).replace('\r\n', '') +
@@ -222,6 +222,8 @@ if __name__ == "__main__":
                              " < " + SONG)
                 print("Enviamos RTP: ", aEjecutar)
                 os.system(aEjecutar)
+                clen = "cvlc rtp://@127.0.0.1:" + str(PORT_RTP )
+                os.system(clen)
                 print('ACABADO')
             if element == '200' and METODO == 'BYE':
                 log.cierre(fichero)
