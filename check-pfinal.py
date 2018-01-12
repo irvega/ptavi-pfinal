@@ -3,10 +3,8 @@
 
 """
 Script de comprobación de entrega de práctica
-
 Para ejecutarlo, desde la shell:
  $ python check-pfinal.py login_github
-
 """
 
 import os
