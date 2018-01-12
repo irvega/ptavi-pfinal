@@ -18,18 +18,27 @@ class USERS(socketserver.DatagramRequestHandler):
     dic = {}
     dic_nonc = {}
 
+    def error(self, line):
+        """
+        Busca errores en la petición
+        """
+        line_error = line.split(' ')
+        line_one = ''.join(line.split('\r\n')[0]).split()
+        fail = False
+        if len(line_one) != 3:
+            fail = True
+            print(fail)
+        if line_error[1][0:4] != 'sip:' or 'SIP/2.0\r\n' not in line_error[2]:
+            fail = True
+        if '@' not in line_error[1]:
+            fail = True
+        return fail
+
     def user_create(self, base):
         """
         Escribe en un fichero
         """
         with open(base, 'w') as file:
-            """
-            for USER in self.dic:
-                line = (USER + ', ' + self.dic[USER][0] + ', ' +
-                       str(self.dic[USER][1]) + ', ' + str(self.dic[USER][2]) +
-                       ', ' + str(self.dic[USER][4]) + '\r\n')
-            file.write(line)
-            """
             file.write(str(self.dic).replace('], ', '\r\n'))
 
     def register(self):
@@ -109,7 +118,7 @@ class USERS(socketserver.DatagramRequestHandler):
         METHOD = WORD[0]
 
         RECIVE = line.decode('utf-8').split(' ')
-
+        print(RECIVE)
         if line and line.decode('utf-8')[:8] == 'REGISTER':
             USER = WORD[1][4:-5]
             IP = self.client_address[0]
@@ -130,7 +139,8 @@ class USERS(socketserver.DatagramRequestHandler):
                             NUM_CLIENT = WORD[7][10:-1]
                             NUM_PROXY = self.check(self.dic_nonc[USER], USER)
                             if NUM_CLIENT == NUM_PROXY:
-                                self.dic[USER] = [IP, PORT, EXPIRES, EXPIRE_NUM]
+                                self.dic[USER] = [IP, PORT, EXPIRES,
+                                                  EXPIRE_NUM]
                                 message = 'SIP/2.0 200 OK  \r\n\r\n'
                                 self.wfile.write(bytes(message, 'utf-8'))
                                 self.user_create(base)
@@ -143,7 +153,8 @@ class USERS(socketserver.DatagramRequestHandler):
                         message = ('SIP/2.0 401 Unauthorized\r\n' +
                                    'WWW-Authenticate: Digest nonce="' +
                                    str(nonce))
-                        self.wfile.write(bytes(message, 'utf-8') + b'" \r\n\r\n')
+                        self.wfile.write(bytes(message,
+                                               'utf-8') + b'" \r\n\r\n')
             else:
                 self.dic[USER] = [IP, PORT, EXPIRES, EXPIRE_NUM]
                 try:
@@ -168,9 +179,20 @@ class USERS(socketserver.DatagramRequestHandler):
                 message = self.sent_uaserver(IP, PORT, METHOD, line)
                 self.wfile.write(bytes(message, 'utf-8') + b'\r\n\r\n')
                 log.logsent(IP, PORT, message, fichero)
+            elif self.error(line.decode('utf-8')):
+                IP = self.client_address[0]
+                PORT = self.client_address[1]
+                log.logrecive(IP, PORT,  RECIVE, fichero)
+                message = 'SIP/2.0 400 Bad Request\r\n\r\n'
+                self.wfile.write(bytes(message, 'utf-8'))
+                log.logsent(IP, PORT, message, fichero)
             else:
+                IP = self.client_address[0]
+                PORT = self.client_address[1]
+                log.logrecive(IP, PORT,  RECIVE, fichero)
                 message = 'SIP/2.0 404 User Not Found\r\n\r\n'
                 self.wfile.write(bytes(message, 'utf-8'))
+                log.logsent(IP, PORT, message, fichero)
         else:
             IP = self.client_address[0]
             PORT = self.client_address[1]
