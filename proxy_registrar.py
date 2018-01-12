@@ -87,6 +87,9 @@ class USERS(socketserver.DatagramRequestHandler):
         return fcheck.hexdigest()
 
     def sent_uaserver(self, IP_SERV, PORT_SERV, METHOD, line):
+        """
+        Envio las cosas del cliente al servidor
+        """
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
             my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -172,13 +175,18 @@ class USERS(socketserver.DatagramRequestHandler):
             if USER in self.dic:
                 IP = self.client_address[0]
                 PORT = self.client_address[1]
+                print(PORT)
                 log.logrecive(IP, PORT,  RECIVE, fichero)
                 IP = self.dic[USER][0]
                 PORT = int(self.dic[USER][1])
                 print(PORT)
-                message = self.sent_uaserver(IP, PORT, METHOD, line)
-                self.wfile.write(bytes(message, 'utf-8') + b'\r\n\r\n')
+                message = ' '.join(RECIVE)
                 log.logsent(IP, PORT, message, fichero)
+                message = self.sent_uaserver(IP, PORT, METHOD, line)
+                IP = self.client_address[0]
+                PORT = self.client_address[1]
+                log.logsent(IP, PORT, message, fichero)
+                self.wfile.write(bytes(message, 'utf-8') + b'\r\n\r\n')
             elif self.error(line.decode('utf-8')):
                 IP = self.client_address[0]
                 PORT = self.client_address[1]
