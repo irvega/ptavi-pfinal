@@ -13,22 +13,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
     dic = {}
 
-    def error(self, line):
-        """
-        Busca errores en la petición
-        """
-        line_error = line.split(' ')
-        line_one = ''.join(line.split('\r\n')[0]).split()
-        fail = False
-        if len(line_one) != 3:
-            fail = True
-            print(fail)
-        if line_error[1][0:4] != 'sip:' or 'SIP/2.0\r\n' not in line_error[2]:
-            fail = True
-        if '@' not in line_error[1]:
-            fail = True
-        return fail
-
     def handle(self):
         """
         Envia respuestas según método
@@ -45,9 +29,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 break
             if method not in lista:
                 message = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
-                self.wfile.write(bytes(message, 'utf-8'))
-            elif self.error(line.decode('utf-8')):
-                message = 'SIP/2.0 400 Bad Request\r\n\r\n'
                 self.wfile.write(bytes(message, 'utf-8'))
             elif method == lista[0]:
                 message = ('SIP/2.0 100 Trying \r\n\r\n' +
