@@ -222,7 +222,7 @@ if __name__ == "__main__":
                              " < " + SONG)
                 print("Enviamos RTP: ", aEjecutar)
                 os.system(aEjecutar)
-                clen = "cvlc rtp://@127.0.0.1:" + str(PORT_RTP )
+                clen = "cvlc rtp://@127.0.0.1:" + str(PORT_RTP)
                 os.system(clen)
                 print('ACABADO')
             if element == '200' and METODO == 'BYE':
